@@ -613,34 +613,6 @@ export default function SignUpScreen({
                                             </Text>
                                         </View>
                                     </View>
-                                    {/* <View style={signUpStyles.formGroup}>
-                                    <Text style={signUpStyles.label}>✅ Confirm Password</Text>
-                                    <Animated.View
-                                        style={{ transform: [{ scale: confirmPasswordScale }] }}
-                                    >
-                                        <TextInput
-                                            value={confirmPassword}
-                                            onChangeText={(value) => {
-                                                setConfirmPassword(value);
-                                                clearFieldError('confirmPassword');
-                                            }}
-                                            onFocus={() => handleFocus('confirmPassword')}
-                                            onBlur={() => handleBlur('confirmPassword')}
-                                            placeholder="••••••••"
-                                            placeholderTextColor="#9CA3AF"
-                                            secureTextEntry
-                                            style={[
-                                                signUpStyles.input,
-                                                signUpStyles.tealInput,
-                                                errors.confirmPassword && signUpStyles.errorInput,
-                                                focusedField === 'confirmPassword' &&
-                                                signUpStyles.tealFocusedInput,
-                                            ]}
-                                        />
-                                    </Animated.View>
-                                    {renderError('confirmPassword')}
-                                </View> */}
-
                                     <View style={signUpStyles.formGroup}>
                                         <Text style={signUpStyles.label}>✅ Confirm Password</Text>
 

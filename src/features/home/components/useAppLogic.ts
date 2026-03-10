@@ -142,13 +142,13 @@ export function useAppLogic() {
         });
     };
 
- 
+
     const toggleMedication = (id: string) => {
         setMedications((prev) => {
             const updated = prev.map((med) => {
                 if (med.id !== id) return med;
 
-                const newStatus: MedicationStatus = med.status === 'pending' ? 'taken' : 'pending';  // Ensure it's typed as MedicationStatus
+                const newStatus: MedicationStatus = med.status === 'pending' ? 'taken' : 'pending';
 
                 if (newStatus === 'taken') {
                     triggerCelebration();
