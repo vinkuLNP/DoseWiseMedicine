@@ -1,0 +1,4 @@
+export const MEDICATION_RULES = {
+    XP_GAIN_MEDICATION: 100,
+    XP_LOSS_MEDICATION: -100,
+};

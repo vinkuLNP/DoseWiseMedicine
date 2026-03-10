@@ -11,8 +11,8 @@ import {
     TouchableOpacity,
     View, KeyboardAvoidingView,
     Platform
-
 } from 'react-native';
+import NetInfo from "@react-native-community/netinfo";
 import LinearGradient from 'react-native-linear-gradient';
 import { PillCharacter } from '../../splash/components/PillCharacter';
 import { CelebrationOverlay } from '../components/CelebrationOverlay';
@@ -21,12 +21,16 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { signUpUser } from '../domain/usecases/sign_up_user';
 import { Snackbar } from 'react-native-snackbar';
 import { signUpStyles } from '../styles/signUpStyles';
-
-type FieldName = 'name' | 'email' | 'password' | 'confirmPassword';
-
+import { ErrorModal } from '../components/error_modal';
+import { SuccessModal } from '../components/success_modal';
+import { useSignUp } from '../hooks/useSignUp';
+import { STRINGS } from '../../../core/constants/strings';
+import { ErrorState, SIGN_UP_FIELDS, SIGNUP_LIMITS, SignUpFieldName } from '../constants/auth_constants';
+import { useSignUpAnimations } from '../hooks/useSignUpAnimations';
+import { useSignUpFieldAnimations } from '../hooks/useSignUpFieldAnimation';
+import { useSignUpLoadingAnimations } from '../hooks/useSignUpLoadingAnimation';
 
 type SignUpScreenProps = NativeStackScreenProps<RootStackParamList, 'CreateAccount'>;
-type ErrorState = Partial<Record<FieldName, string>>;
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -38,123 +42,26 @@ export default function SignUpScreen({
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [showCelebration, setShowCelebration] = useState(false);
-    const [focusedField, setFocusedField] = useState<FieldName | null>(null);
+
+    const [focusedField, setFocusedField] = useState<SignUpFieldName | null>(null);
     const [errors, setErrors] = useState<ErrorState>({});
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const logoOpacity = useRef(new Animated.Value(0)).current;
-    const logoTranslateY = useRef(new Animated.Value(24)).current;
+    const [showCelebration, setShowCelebration] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState(0);
-    const mascotOpacity = useRef(new Animated.Value(0)).current;
-    const mascotTranslateY = useRef(new Animated.Value(24)).current;
+    const [errorMsg, setErrorMsg] = useState("");
+    const [showError, setShowError] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
 
-    const bannerOpacity = useRef(new Animated.Value(0)).current;
-    const bannerTranslateY = useRef(new Animated.Value(24)).current;
-
-    const formOpacity = useRef(new Animated.Value(0)).current;
-    const formTranslateY = useRef(new Animated.Value(24)).current;
-
-    const buttonOpacity = useRef(new Animated.Value(0)).current;
-    const buttonTranslateY = useRef(new Animated.Value(24)).current;
-
-    const termsOpacity = useRef(new Animated.Value(0)).current;
-    const termsTranslateY = useRef(new Animated.Value(24)).current;
-
-    const dividerOpacity = useRef(new Animated.Value(0)).current;
-    const dividerTranslateY = useRef(new Animated.Value(24)).current;
-
-    const loginOpacity = useRef(new Animated.Value(0)).current;
-    const loginTranslateY = useRef(new Animated.Value(24)).current;
-
-    const bottomOpacity = useRef(new Animated.Value(0)).current;
-    const bottomTranslateY = useRef(new Animated.Value(24)).current;
-
-    const mascotFloat = useRef(new Animated.Value(0)).current;
-    const mascotRotate = useRef(new Animated.Value(0)).current;
-
-    const buttonPulse = useRef(new Animated.Value(1)).current;
-    const loadingRotate = useRef(new Animated.Value(0)).current;
-
-    const nameScale = useRef(new Animated.Value(1)).current;
-    const emailScale = useRef(new Animated.Value(1)).current;
-    const passwordScale = useRef(new Animated.Value(1)).current;
-    const confirmPasswordScale = useRef(new Animated.Value(1)).current;
-    const nameShake = useRef(new Animated.Value(0)).current;
-    const emailShake = useRef(new Animated.Value(0)).current;
-    const passwordShake = useRef(new Animated.Value(0)).current;
-    const confirmPasswordShake = useRef(new Animated.Value(0)).current;
-    useEffect(() => {
-        const sections = [
-            { opacity: logoOpacity, translateY: logoTranslateY, delay: 100 },
-            { opacity: mascotOpacity, translateY: mascotTranslateY, delay: 200 },
-            { opacity: bannerOpacity, translateY: bannerTranslateY, delay: 300 },
-            { opacity: formOpacity, translateY: formTranslateY, delay: 400 },
-            { opacity: buttonOpacity, translateY: buttonTranslateY, delay: 500 },
-            { opacity: termsOpacity, translateY: termsTranslateY, delay: 600 },
-            { opacity: dividerOpacity, translateY: dividerTranslateY, delay: 700 },
-            { opacity: loginOpacity, translateY: loginTranslateY, delay: 800 },
-            { opacity: bottomOpacity, translateY: bottomTranslateY, delay: 900 },
-        ];
-
-        const timers = sections.map((section) =>
-            setTimeout(() => {
-                Animated.parallel([
-                    Animated.timing(section.opacity, {
-                        toValue: 1,
-                        duration: 380,
-                        useNativeDriver: true,
-                    }),
-                    Animated.spring(section.translateY, {
-                        toValue: 0,
-                        stiffness: 300,
-                        damping: 24,
-                        mass: 1,
-                        useNativeDriver: true,
-                    }),
-                ]).start();
-            }, section.delay)
-        );
-
-        Animated.loop(
-            Animated.parallel([
-                Animated.sequence([
-                    Animated.timing(mascotFloat, {
-                        toValue: -8,
-                        duration: 1200,
-                        easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(mascotFloat, {
-                        toValue: 0,
-                        duration: 1200,
-                        easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
-                ]),
-                Animated.sequence([
-                    Animated.timing(mascotRotate, {
-                        toValue: 1,
-                        duration: 1200,
-                        easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(mascotRotate, {
-                        toValue: 0,
-                        duration: 1200,
-                        easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
-                ]),
-            ])
-        ).start();
-
-        return () => {
-            timers.forEach(clearTimeout);
-        };
-    }, [
+    const {
+        logoOpacity,
+        logoTranslateY,
+        mascotOpacity,
+        mascotTranslateY,
         bannerOpacity,
         bannerTranslateY,
+        mascotFloat,
+        mascotRotate,
         bottomOpacity,
         bottomTranslateY,
         buttonOpacity,
@@ -165,75 +72,27 @@ export default function SignUpScreen({
         formTranslateY,
         loginOpacity,
         loginTranslateY,
-        logoOpacity,
-        logoTranslateY,
-        mascotFloat,
-        mascotOpacity,
-        mascotRotate,
-        mascotTranslateY,
         termsOpacity,
         termsTranslateY,
-    ]);
-    const shakeField = (field: FieldName) => {
-        let shake;
 
-        switch (field) {
-            case 'name':
-                shake = nameShake;
-                break;
-            case 'email':
-                shake = emailShake;
-                break;
-            case 'password':
-                shake = passwordShake;
-                break;
-            case 'confirmPassword':
-                shake = confirmPasswordShake;
-                break;
-        }
+    } = useSignUpAnimations();
 
-        Animated.sequence([
-            Animated.timing(shake!, { toValue: 8, duration: 50, useNativeDriver: true }),
-            Animated.timing(shake!, { toValue: -8, duration: 50, useNativeDriver: true }),
-            Animated.timing(shake!, { toValue: 6, duration: 50, useNativeDriver: true }),
-            Animated.timing(shake!, { toValue: -6, duration: 50, useNativeDriver: true }),
-            Animated.timing(shake!, { toValue: 0, duration: 50, useNativeDriver: true }),
-        ]).start();
-    };
-    useEffect(() => {
-        if (!isLoading) {
-            buttonPulse.stopAnimation();
-            loadingRotate.stopAnimation();
-            buttonPulse.setValue(1);
-            loadingRotate.setValue(0);
-            return;
-        }
 
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(buttonPulse, {
-                    toValue: 1.02,
-                    duration: 400,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(buttonPulse, {
-                    toValue: 1,
-                    duration: 400,
-                    useNativeDriver: true,
-                }),
-            ])
-        ).start();
+    const { buttonPulse, loadingRotate } = useSignUpLoadingAnimations(isLoading);
 
-        Animated.loop(
-            Animated.timing(loadingRotate, {
-                toValue: 1,
-                duration: 600,
-                easing: Easing.linear,
-                useNativeDriver: true,
-            })
-        ).start();
-    }, [buttonPulse, isLoading, loadingRotate]);
-
+    const {
+        nameScale,
+        emailScale,
+        passwordScale,
+        confirmPasswordScale,
+        nameShake,
+        emailShake,
+        passwordShake,
+        confirmPasswordShake,
+        shakeField,
+        handleFocus,
+        handleBlur,
+    } = useSignUpFieldAnimations();
     const mascotRotation = mascotRotate.interpolate({
         inputRange: [0, 0.5, 1],
         outputRange: ['-2deg', '2deg', '-2deg'],
@@ -244,71 +103,38 @@ export default function SignUpScreen({
         outputRange: ['0deg', '360deg'],
     });
 
-    const getScaleRef = (field: FieldName) => {
-        switch (field) {
-            case 'name':
-                return nameScale;
-            case 'email':
-                return emailScale;
-            case 'password':
-                return passwordScale;
-            case 'confirmPassword':
-                return confirmPasswordScale;
-        }
-    };
-
-    const handleFocus = (field: FieldName) => {
-        setFocusedField(field);
-        Animated.spring(getScaleRef(field), {
-            toValue: 1.01,
-            stiffness: 400,
-            damping: 25,
-            useNativeDriver: true,
-        }).start();
-    };
-
-    const handleBlur = (field: FieldName) => {
-        setFocusedField(null);
-        Animated.spring(getScaleRef(field), {
-            toValue: 1,
-            stiffness: 400,
-            damping: 25,
-            useNativeDriver: true,
-        }).start();
-    };
-
     const validate = () => {
         const newErrors: ErrorState = {};
 
         if (!name.trim()) {
-            newErrors.name = 'What should we call you? 🤔';
-            shakeField('name');
+            newErrors.name = STRINGS.nameError;
+            shakeField(SIGN_UP_FIELDS.NAME);
         }
 
         if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
-            newErrors.email = 'Need a valid email! 📧';
-            shakeField('email');
+            newErrors.email = STRINGS.validEmail;
+            shakeField(SIGN_UP_FIELDS.EMAIL);
         }
 
         const passwordRegex =
             /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
 
         if (!passwordRegex.test(password)) {
-            newErrors.password =
-                '6+ chars, 1 Capital, 1 Number & 1 Special 🔒';
-            shakeField('password');
+            newErrors.password = STRINGS.passReq
+                ;
+            shakeField(SIGN_UP_FIELDS.PASSWORD);
         }
 
         if (password !== confirmPassword) {
-            newErrors.confirmPassword = "Passwords don't match! 😅";
-            shakeField('confirmPassword');
+            newErrors.confirmPassword = STRINGS.passDoNotMatch;
+            shakeField(SIGN_UP_FIELDS.CONFIRM_PASSWORD);
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const clearFieldError = (field: FieldName) => {
+    const clearFieldError = (field: SignUpFieldName) => {
         if (!errors[field]) return;
         setErrors((prev) => ({
             ...prev,
@@ -329,27 +155,22 @@ export default function SignUpScreen({
 
         if (isLoading) return
         if (!validate()) return
-
+        const state = await NetInfo.fetch();
+        if (!state.isConnected) {
+            setErrorMsg(STRINGS.noInternet);
+            setShowError(true);
+            return;
+        }
         try {
 
             setIsLoading(true)
 
             await signUpUser(name, email, password)
-
-            Snackbar.show({
-                text: "📩 Verification email sent. Please verify before login.",
-                duration: Snackbar.LENGTH_LONG,
-            })
-
-            navigation.navigate(ROUTES.Login)
-
+            setShowSuccess(true);
         } catch (error: any) {
 
-            Snackbar.show({
-                text: error.message,
-                duration: Snackbar.LENGTH_LONG,
-            })
-
+            setErrorMsg(error.message);
+            setShowError(true);
         } finally {
             setIsLoading(false)
         }
@@ -369,7 +190,7 @@ export default function SignUpScreen({
         [isLoading]
     );
 
-    const renderError = (field: FieldName) => {
+    const renderError = (field: SignUpFieldName) => {
         if (!errors[field]) return null;
 
         return <Text style={signUpStyles.errorText}>{errors[field]}</Text>;
@@ -420,10 +241,10 @@ export default function SignUpScreen({
                                     ]}
                                 >
                                     <View style={signUpStyles.logoRow}>
-                                        <Text style={signUpStyles.logoText}>PillPal</Text>
+                                        <Text style={signUpStyles.logoText}>{STRINGS.appName}</Text>
                                         <Text style={signUpStyles.logoEmoji}>💊</Text>
                                     </View>
-                                    <Text style={signUpStyles.logoSubText}>Your streak starts today! ✨</Text>
+                                    <Text style={signUpStyles.logoSubText}>{STRINGS.signUpSubtitle}</Text>
                                 </Animated.View>
 
                                 <Animated.View
@@ -468,10 +289,10 @@ export default function SignUpScreen({
 
                                             <View style={signUpStyles.bannerTextWrap}>
                                                 <Text style={signUpStyles.bannerTitle}>
-                                                    Join 10,000+ streak champions
+                                                    {STRINGS.bannerTitle}
                                                 </Text>
                                                 <Text style={signUpStyles.bannerSubTitle}>
-                                                    Build healthy habits, one day at a time
+                                                    {STRINGS.bannerSubtitle}
                                                 </Text>
                                             </View>
 
@@ -502,21 +323,21 @@ export default function SignUpScreen({
                                                 value={name}
                                                 onChangeText={(value) => {
                                                     setName(value);
-                                                    clearFieldError('name');
+                                                    clearFieldError(SIGN_UP_FIELDS.NAME);
                                                 }}
-                                                onFocus={() => handleFocus('name')}
-                                                onBlur={() => handleBlur('name')}
+                                                onFocus={() => handleFocus(SIGN_UP_FIELDS.NAME)}
+                                                onBlur={() => handleBlur(SIGN_UP_FIELDS.NAME)}
                                                 placeholder="Alex Johnson"
                                                 placeholderTextColor="#9CA3AF"
                                                 style={[
                                                     signUpStyles.input,
                                                     signUpStyles.violetInput,
                                                     errors.name && signUpStyles.errorInput,
-                                                    focusedField === 'name' && signUpStyles.violetFocusedInput,
+                                                    focusedField === SIGN_UP_FIELDS.NAME && signUpStyles.violetFocusedInput,
                                                 ]}
                                             />
                                         </Animated.View>
-                                        {renderError('name')}
+                                        {renderError(SIGN_UP_FIELDS.NAME)}
                                     </View>
 
                                     <View style={signUpStyles.formGroup}>
@@ -529,10 +350,10 @@ export default function SignUpScreen({
                                                 value={email}
                                                 onChangeText={(value) => {
                                                     setEmail(value);
-                                                    clearFieldError('email');
+                                                    clearFieldError(SIGN_UP_FIELDS.EMAIL);
                                                 }}
-                                                onFocus={() => handleFocus('email')}
-                                                onBlur={() => handleBlur('email')}
+                                                onFocus={() => handleFocus(SIGN_UP_FIELDS.EMAIL)}
+                                                onBlur={() => handleBlur(SIGN_UP_FIELDS.EMAIL)}
                                                 placeholder="you@example.com"
                                                 placeholderTextColor="#9CA3AF"
                                                 keyboardType="email-address"
@@ -541,11 +362,11 @@ export default function SignUpScreen({
                                                     signUpStyles.input,
                                                     signUpStyles.pinkInput,
                                                     errors.email && signUpStyles.errorInput,
-                                                    focusedField === 'email' && signUpStyles.pinkFocusedInput,
+                                                    focusedField === SIGN_UP_FIELDS.EMAIL && signUpStyles.pinkFocusedInput,
                                                 ]}
                                             />
                                         </Animated.View>
-                                        {renderError('email')}
+                                        {renderError(SIGN_UP_FIELDS.EMAIL)}
                                     </View>
 
                                     <View style={signUpStyles.formGroup}>
@@ -564,10 +385,10 @@ export default function SignUpScreen({
                                                     value={password}
                                                     onChangeText={(value) => {
                                                         setPassword(value);
-                                                        clearFieldError('password'); checkPasswordStrength(value);
+                                                        clearFieldError(SIGN_UP_FIELDS.PASSWORD); checkPasswordStrength(value);
                                                     }}
-                                                    onFocus={() => handleFocus('password')}
-                                                    onBlur={() => handleBlur('password')}
+                                                    onFocus={() => handleFocus(SIGN_UP_FIELDS.PASSWORD)}
+                                                    onBlur={() => handleBlur(SIGN_UP_FIELDS.PASSWORD)}
                                                     placeholder="••••••••"
                                                     placeholderTextColor="#9CA3AF"
                                                     secureTextEntry={!showPassword}
@@ -575,7 +396,7 @@ export default function SignUpScreen({
                                                         signUpStyles.input,
                                                         signUpStyles.orangeInput,
                                                         errors.password && signUpStyles.errorInput,
-                                                        focusedField === 'password' && signUpStyles.orangeFocusedInput,
+                                                        focusedField === SIGN_UP_FIELDS.PASSWORD && signUpStyles.orangeFocusedInput,
                                                         { paddingRight: 44 },
                                                     ]}
                                                 />
@@ -591,7 +412,7 @@ export default function SignUpScreen({
                                             </View>
                                         </Animated.View>
 
-                                        {renderError('password')}
+                                        {renderError(SIGN_UP_FIELDS.PASSWORD)}
                                         <View style={signUpStyles.passwordStrengthContainer}>
                                             <View style={signUpStyles.strengthBars}>
                                                 {[1, 2, 3, 4].map((i) => (
@@ -629,10 +450,10 @@ export default function SignUpScreen({
                                                     value={confirmPassword}
                                                     onChangeText={(value) => {
                                                         setConfirmPassword(value);
-                                                        clearFieldError('confirmPassword');
+                                                        clearFieldError(SIGN_UP_FIELDS.CONFIRM_PASSWORD);
                                                     }}
-                                                    onFocus={() => handleFocus('confirmPassword')}
-                                                    onBlur={() => handleBlur('confirmPassword')}
+                                                    onFocus={() => handleFocus(SIGN_UP_FIELDS.CONFIRM_PASSWORD)}
+                                                    onBlur={() => handleBlur(SIGN_UP_FIELDS.CONFIRM_PASSWORD)}
                                                     placeholder="••••••••"
                                                     placeholderTextColor="#9CA3AF"
                                                     secureTextEntry={!showConfirmPassword}
@@ -640,7 +461,7 @@ export default function SignUpScreen({
                                                         signUpStyles.input,
                                                         signUpStyles.tealInput,
                                                         errors.confirmPassword && signUpStyles.errorInput,
-                                                        focusedField === 'confirmPassword' && signUpStyles.tealFocusedInput,
+                                                        focusedField === SIGN_UP_FIELDS.CONFIRM_PASSWORD && signUpStyles.tealFocusedInput,
                                                         { paddingRight: 44 },
                                                     ]}
                                                 />
@@ -656,7 +477,7 @@ export default function SignUpScreen({
                                             </View>
                                         </Animated.View>
 
-                                        {renderError('confirmPassword')}
+                                        {renderError(SIGN_UP_FIELDS.CONFIRM_PASSWORD)}
                                     </View>
                                 </Animated.View>
 
@@ -776,9 +597,24 @@ export default function SignUpScreen({
                                 <View style={{ height: 12 }} />
                             </ScrollView>
                         </KeyboardAvoidingView>
+                        <SuccessModal
+                            visible={showSuccess}
+                            message={STRINGS.successMessage}
+                            onClose={() => {
+                                setShowSuccess(false);
+                                navigation.navigate(ROUTES.Login);
+                            }}
+                        />
+                        <ErrorModal
+                            visible={showError}
+                            message={errorMsg}
+                            onClose={() => setShowError(false)}
+                            title={STRINGS.signUpErrorTitle}
+
+                        />
                         <CelebrationOverlay
                             isVisible={showCelebration}
-                            message="Welcome to PillPal! 🎉"
+                            message={STRINGS.welcme}
                             onComplete={handleCelebrationComplete}
                         />
                     </View>

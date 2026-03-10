@@ -3,7 +3,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     Animated,
     Easing,
-
     StatusBar,
     StyleSheet,
     Text,
@@ -14,13 +13,14 @@ import {
     Alert, KeyboardAvoidingView,
     Platform,
 } from 'react-native';
+import NetInfo from "@react-native-community/netinfo";
 import LinearGradient from 'react-native-linear-gradient';
 import { CelebrationOverlay } from '../components/CelebrationOverlay';
 import { RootStackParamList, ROUTES } from '../../../core/navigation/routes';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LoginMascot from '../../splash/components/loginMascot';
 import { styles } from '../styles/loginStyles';
-import { BADGES, BLOB_DATA } from '../constants/login_constants';
+import { BADGES, BLOB_DATA } from '../constants/auth_constants';
 import { txtfield_styles } from '../components/inputs/textfield_styles';
 import { loginUser } from '../domain/usecases/login_user';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -267,29 +267,37 @@ export default function LoginScreen({ navigation }: LoginPageProps) {
     };
     const handleLogin = async () => {
 
-        if (isLoading) return
+        if (isLoading) return;
 
-        if (!validate()) return
+        if (!validate()) return;
+
+        const state = await NetInfo.fetch();
+
+        if (!state.isConnected) {
+            setErrorMsg("Internet connection not available");
+            setShowError(true);
+            return;
+        }
 
         try {
 
-            setIsLoading(true)
+            setIsLoading(true);
 
-            const res = await loginUser(email, password)
+            const res = await loginUser(email, password);
 
             if (res.session) {
-                setShowCelebration(true)
+                setShowCelebration(true);
             }
 
         } catch (error: any) {
 
-            setErrorMsg(error.message)
-            setShowError(true)
+            setErrorMsg(error.message);
+            setShowError(true);
 
         } finally {
-            setIsLoading(false)
+            setIsLoading(false);
         }
-    }
+    };
 
     const handleCelebrationComplete = () => {
         setShowCelebration(false);
@@ -527,11 +535,11 @@ export default function LoginScreen({ navigation }: LoginPageProps) {
                                         {renderError('password')}
                                     </View>
 
-                                    <View style={styles.forgotWrap}>
+                                    {/* <View style={styles.forgotWrap}>
                                         <TouchableOpacity activeOpacity={0.8}>
                                             <Text style={styles.forgotText}>Forgot password? 🤔</Text>
                                         </TouchableOpacity>
-                                    </View>
+                                    </View> */}
                                 </Animated.View>
 
                                 <Animated.View
@@ -635,6 +643,8 @@ export default function LoginScreen({ navigation }: LoginPageProps) {
                                 visible={showError}
                                 message={errorMsg}
                                 onClose={() => setShowError(false)}
+                                title='⚠️ Login Failed'
+
                             />
                             <CelebrationOverlay
                                 isVisible={showCelebration}
