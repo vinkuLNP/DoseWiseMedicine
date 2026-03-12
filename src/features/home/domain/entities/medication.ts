@@ -1,4 +1,4 @@
-export type MedicationStatus = 'pending' | 'taken' | 'skipped';
+import { MedicationStatus } from "../enum/medicationStatus";
 
 export interface Medication {
   id: string;

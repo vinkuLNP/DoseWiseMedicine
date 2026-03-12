@@ -25,7 +25,6 @@ export default function LoginMascot({ size = 120 }: LoginMascotProps) {
                 },
             ]}
         >
-            {/* top faded arch */}
             <View
                 style={[
                     styles.archWrap,
@@ -50,7 +49,6 @@ export default function LoginMascot({ size = 120 }: LoginMascotProps) {
                 />
             </View>
 
-            {/* eyes */}
             <View
                 style={[
                     styles.eyesRow,
@@ -82,8 +80,6 @@ export default function LoginMascot({ size = 120 }: LoginMascotProps) {
                     ]}
                 />
             </View>
-
-            {/* mouth */}
             <View
                 style={[
                     styles.mouth,

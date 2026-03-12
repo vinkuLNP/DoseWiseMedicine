@@ -1,95 +1,19 @@
 import { useMemo, useState } from 'react';
-import { Medication, MedicationStatus } from '../domain/entities/medication';
+import { Medication, } from '../domain/entities/medication';
 import { Achievement } from '../domain/entities/achievement';
 import { UserStats } from '../domain/entities/userStats';
-
-const INITIAL_MEDS: Medication[] = [
-    {
-        id: '1',
-        name: 'Vitamin D',
-        dosage: '1000 IU',
-        time: '08:00 AM',
-        status: 'pending',
-        color: 'yellow',
-    },
-    {
-        id: '2',
-        name: 'Omega-3',
-        dosage: '500 mg',
-        time: '08:00 AM',
-        status: 'pending',
-        color: 'teal',
-    },
-    {
-        id: '3',
-        name: 'Iron Supplement',
-        dosage: '65 mg',
-        time: '01:00 PM',
-        status: 'pending',
-        color: 'coral',
-    },
-    {
-        id: '4',
-        name: 'Magnesium',
-        dosage: '200 mg',
-        time: '09:00 PM',
-        status: 'pending',
-        color: 'purple',
-    },
-];
-
-const INITIAL_ACHIEVEMENTS: Achievement[] = [
-    {
-        id: '1',
-        title: 'First Step',
-        description: 'Take your first medication',
-        icon: 'starter',
-        unlocked: true,
-
-        progress: 1,
-        maxProgress: 1,
-    },
-    {
-        id: '2',
-        title: '3 Day Streak',
-        description: 'Maintain a 3 day streak',
-        icon: 'streak',
-        unlocked: false,
-        progress: 2,
-        maxProgress: 3,
-    },
-    {
-        id: '3',
-        title: 'Perfect Day',
-        description: 'Complete all meds in a day',
-        icon: 'perfect',
-        unlocked: false,
-        progress: 0,
-        maxProgress: 1,
-    },
-    {
-        id: '4',
-        title: 'Med Master',
-        description: 'Reach Level 5',
-        icon: 'master',
-        unlocked: false,
-        progress: 2,
-        maxProgress: 5,
-    },
-];
-
-const INITIAL_STATS: UserStats = {
-    streak: 5,
-    level: 2,
-    xp: 450,
-    xpToNextLevel: 1000,
-    totalTaken: 42,
-    adherenceRate: 95,
-};
-
+import { DEFAULT_MEDICATIONS } from '../domain/config/defaultMedication';
+import { DEFAULT_STATS } from '../domain/config/defaultStats';
+import { INITIAL_ACHIEVEMENTS } from '../domain/config/defaultAchievement';
+import { STRINGS } from '../../../core/constants/strings';
+import { isPerfectDay } from '../domain/services/achievementService';
+import { AchievementId } from '../domain/enum/achievementId';
+import { toggleMedicationStatus } from '../domain/utils/toggleMedicationStatus';
+import { MedicationStatus } from '../domain/enum/medicationStatus';
+import { MEDICATION_RULES } from '../domain/utils/medicationRules';
 export function useAppLogic() {
-    const [medications, setMedications] = useState<Medication[]>(INITIAL_MEDS);
-    const [stats, setStats] = useState<UserStats>(INITIAL_STATS);
+    const [medications, setMedications] = useState<Medication[]>(DEFAULT_MEDICATIONS);
+    const [stats, setStats] = useState<UserStats>(DEFAULT_STATS);
     const [achievements, setAchievements] =
         useState<Achievement[]>(INITIAL_ACHIEVEMENTS);
     const [celebration, setCelebration] = useState<{
@@ -101,28 +25,33 @@ export function useAppLogic() {
     });
 
     const progress = useMemo(() => {
-        return Math.round(
-            (medications.filter((m) => m.status === 'taken').length / medications.length) * 100
-        );
+        const taken = medications.filter(
+            (m) => m.status === MedicationStatus.TAKEN
+        ).length;
+
+        return Math.round((taken / medications.length) * 100);
+
     }, [medications]);
 
+
     const triggerCelebration = () => {
-        const messages = ['Awesome!', 'Keep it up!', "You're on fire!", 'Healthy habit!'];
-        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+        const randomMsg = STRINGS.celebrationMsg[Math.floor(Math.random() * STRINGS.celebrationMsg.length)];
         setCelebration({ show: true, message: randomMsg });
     };
 
-    const checkAchievements = (updatedMeds: Medication[]) => {
-        const allTaken = updatedMeds.every((m) => m.status === 'taken');
+    const checkAchievements = (updated: Medication[]) => {
 
-        if (allTaken) {
+        if (isPerfectDay(updated)) {
             setAchievements((prev) =>
                 prev.map((a) =>
-                    a.id === '3' ? { ...a, unlocked: true, progress: 1 } : a
+                    a.id === AchievementId.PERFECT_DAY
+                        ? { ...a, unlocked: true, progress: 1 }
+                        : a
                 )
             );
         }
     };
+
 
     const updateStats = (xpChange: number) => {
         setStats((prev) => {
@@ -130,7 +59,7 @@ export function useAppLogic() {
             const levelUp = newXp >= prev.xpToNextLevel;
 
             if (levelUp) {
-                setCelebration({ show: true, message: 'Level Up!' });
+                setCelebration({ show: true, message: STRINGS.levelUpMessage });
             }
 
             return {
@@ -142,19 +71,19 @@ export function useAppLogic() {
         });
     };
 
- 
+
     const toggleMedication = (id: string) => {
         setMedications((prev) => {
             const updated = prev.map((med) => {
                 if (med.id !== id) return med;
 
-                const newStatus: MedicationStatus = med.status === 'pending' ? 'taken' : 'pending';  // Ensure it's typed as MedicationStatus
+                const newStatus = toggleMedicationStatus(med.status);
 
-                if (newStatus === 'taken') {
+                if (newStatus === MedicationStatus.TAKEN) {
                     triggerCelebration();
-                    updateStats(100);
+                    updateStats(MEDICATION_RULES.XP_GAIN_MEDICATION);
                 } else {
-                    updateStats(-100);
+                    updateStats(MEDICATION_RULES.XP_LOSS_MEDICATION);
                 }
 
                 return { ...med, status: newStatus };

@@ -26,5 +26,36 @@ export const STRINGS = {
     signupButton: "Start your streak! ✨",
     bottomTitle: "🔥 Don't break the chain — log in daily!",
     averageText: "Average user streak:",
-    achievementsTitle: "Unlock achievements 🎖️"
+    achievementsTitle: "Unlock achievements 🎖️",
+    levelUpMessage: 'Level Up!',
+    celebrationMsg: ['Awesome!',
+        'Keep it up!',
+        "You're on fire!",
+        'Healthy habit!',],
+    signUpSubtitle: "Your streak starts today! ✨",
+
+    nameLabel: "👤 Your Name",
+    confirmPasswordLabel: "✅ Confirm Password",
+    namePlaceholder: "Alex Johnson",
+    emailPlaceholder: "you@example.com",
+    passwordPlaceholder: "••••••••",
+    createButton: "Start My Streak! 🔥",
+    loadingButton: "Creating your streak...",
+    bannerTitle: "Join 10,000+ streak champions",
+    bannerSubtitle: "Build healthy habits, one day at a time",
+    terms:
+        "By signing up you agree to our Terms & Privacy Policy",
+    alreadyUser: "Already a streak champion?",
+    login: "Log in! 🏆",
+    habitMessage: "🌟 It only takes 21 days to build a habit!",
+    successMessage: "📩 Verification email sent. Please verify before login.",
+    signUpErrorTitle: '⚠️ Sign Up Failed',
+ nameError: 'What should we call you? 🤔',
+ validEmail :'Need a valid email! 📧',
+ passReq : '6+ chars, 1 Capital, 1 Number & 1 Special 🔒',
+ passDoNotMatch: "Passwords don't match! 😅",
+ noInternet : 'Internet connection not available',
+ welcme : 'Welcome to PillPal! 🎉',
+
+
 } as const;
