@@ -2,7 +2,7 @@ import React from "react";
 import { Modal, View, Text, TouchableOpacity } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 
-export const ErrorModal = ({ visible, message, onClose, title }: any) => {
+export const SuccessModal = ({ visible, message, onClose }: any) => {
     return (
         <Modal transparent visible={visible} animationType="fade">
             <View
@@ -22,23 +22,25 @@ export const ErrorModal = ({ visible, message, onClose, title }: any) => {
                     }}
                 >
                     <LinearGradient
-                        colors={["#F97316", "#EC4899"]}
+                        colors={["#22C55E", "#16A34A"]}
                         style={{ padding: 20 }}
                     >
                         <Text style={{ color: "white", fontSize: 18, fontWeight: "600" }}>
-                           {title} 
+                            ✅ Success
                         </Text>
                     </LinearGradient>
 
                     <View style={{ padding: 20 }}>
-                        <Text style={{ fontSize: 16, color: "#374151" }}>{message}</Text>
+                        <Text style={{ fontSize: 16, color: "#374151" }}>
+                            {message}
+                        </Text>
 
                         <TouchableOpacity
                             onPress={onClose}
                             style={{
                                 marginTop: 20,
                                 padding: 12,
-                                backgroundColor: "#7C3AED",
+                                backgroundColor: "#16A34A",
                                 borderRadius: 10,
                                 alignItems: "center",
                             }}

@@ -242,10 +242,6 @@ export const styles = StyleSheet.create({
         borderColor: '#FBCFE8',
     },
     passwordEye: {
-        // position: 'absolute',
-        // right: 12,
-        // top: '50%',
-        // transform: [{ translateY: -10 }],
         position: 'absolute',
         right: 12,
         top: 0,

@@ -20,15 +20,8 @@ export const colors = {
   screenGradient: ['#EDE9FE', '#FDF2F8', '#FFF7ED'] as GradientColors,
   bannerGradient: ['#FBBF24', '#FB923C',] as GradientColors,
   splashGradient: ['#9F2CD4', '#A933EA', '#D53FD3', '#F24FA7', '#FF6A45',] as GradientColors,
-
   inputPlaceholder: '#9CA3AF',
-
   logoPurple: '#7C3AED',
-  // gradient1: '#9F2CD4',
-  // gradient2: '#A933EA',
-  // gradient3: '#D53FD3',
-  // gradient4: '#F24FA7',
-  // gradient5: '#FF6A45',
   statusBar: "#F5F3FF"
 
 } as const;
